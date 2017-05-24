@@ -16,10 +16,11 @@
 
 package com.linkedin.pinot.common.config;
 
+import com.linkedin.pinot.common.config.helper.TableConfigJSONBuilder;
 import com.linkedin.pinot.common.utils.CommonConstants.Helix.TableType;
+import com.linkedin.pinot.common.utils.DateFormat;
 import java.io.IOException;
 import org.json.JSONException;
-import org.json.JSONObject;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -29,41 +30,48 @@ public class TableConfigTest {
   @Test
   public void testInit()
       throws IOException, JSONException {
+    TableConfigJSONBuilder tableConfigJSONBuilder =
+        new TableConfigJSONBuilder(TableType.OFFLINE).setTableName("myTable");
     {
-      // with quota and dateformat
-      String tableConfigStr =
-          "{\"tableName\":\"myTable\",\"quota\":{\"storage\":\"30G\"},\"segmentsConfig\":{\"dateFormat\":{\"simpleDate\":\"yymmdd\"},\"retentionTimeUnit\":\"DAYS\",\"retentionTimeValue\":\"60\",\"segmentPushFrequency\":\"daily\",\"segmentPushType\":\"APPEND\",\"replication\":\"2\",\"schemaName\":\"\",\"timeColumnName\":\"\",\"timeType\":\"\",\"segmentAssignmentStrategy\":\"BalanceNumSegmentAssignmentStrategy\"},\"tableIndexConfig\":{\"invertedIndexColumns\":[],\"loadMode\":\"HEAP\",\"lazyLoad\":\"false\"},\"tenants\":{\"broker\":\"colocated\",\"server\":\"myServer\"},\"tableType\":\"OFFLINE\",\"metadata\":{\"customConfigs\":{\"loadBalancer\":\"myLoadBalancer\"}}}";
-      TableConfig tableConfig = TableConfig.init(tableConfigStr);
+      // No date format or quota config
+      TableConfig tableConfig = TableConfig.init(tableConfigJSONBuilder.build().toString());
 
       Assert.assertEquals(tableConfig.getTableName(), "myTable_OFFLINE");
       Assert.assertEquals(tableConfig.getTableType(), TableType.OFFLINE);
       Assert.assertEquals(tableConfig.getIndexingConfig().getLoadMode(), "HEAP");
-      Assert.assertNotNull(tableConfig.getQuotaConfig());
-      Assert.assertEquals(tableConfig.getQuotaConfig().getStorage(), "30G");
-      String tcFromJson = tableConfig.toJSON().toString();
-      TableConfig validator = TableConfig.init(tcFromJson);
-      QuotaConfig quotaConfig = validator.getQuotaConfig();
-      Assert.assertNotNull(quotaConfig);
-      Assert.assertEquals(quotaConfig.getStorage(), tableConfig.getQuotaConfig().getStorage());
+      Assert.assertNull(tableConfig.getValidationConfig().getDateFormat());
+      Assert.assertNull(tableConfig.getQuotaConfig());
+
+      // Serialize then de-serialize
+      TableConfig validator = TableConfig.init(tableConfig.toJSON().toString());
       Assert.assertEquals(validator.getTableName(), tableConfig.getTableName());
-      tableConfig.getValidationConfig();
-      Assert.assertEquals(tableConfig.getValidationConfig().getDateFormat().getSimpleDate(), "yymmdd");
+      Assert.assertNull(validator.getValidationConfig().getDateFormat());
+      Assert.assertNull(validator.getQuotaConfig());
     }
     {
-      // no quota or dateformat
-      String tableConfigStr =
-          "{\"tableName\":\"myTable\",\"segmentsConfig\":{\"retentionTimeUnit\":\"DAYS\",\"retentionTimeValue\":\"60\",\"segmentPushFrequency\":\"daily\",\"segmentPushType\":\"APPEND\",\"replication\":\"2\",\"schemaName\":\"\",\"timeColumnName\":\"\",\"timeType\":\"\",\"segmentAssignmentStrategy\":\"BalanceNumSegmentAssignmentStrategy\"},\"tableIndexConfig\":{\"invertedIndexColumns\":[],\"loadMode\":\"HEAP\",\"lazyLoad\":\"false\"},\"tenants\":{\"broker\":\"colocated\",\"server\":\"myServer\"},\"tableType\":\"OFFLINE\",\"metadata\":{\"customConfigs\":{\"loadBalancer\":\"myLoadBalancer\"}}}";
-      TableConfig tableConfig = TableConfig.init(tableConfigStr);
+      // With date format and quota config
+      DateFormat dateFormat = new DateFormat();
+      dateFormat.setSimpleDate("yymmdd");
+      QuotaConfig quotaConfig = new QuotaConfig();
+      quotaConfig.setStorage("30G");
+      TableConfig tableConfig = TableConfig.init(
+          tableConfigJSONBuilder.setDateFormat(dateFormat).setQuotaConfig(quotaConfig).build().toString());
 
       Assert.assertEquals(tableConfig.getTableName(), "myTable_OFFLINE");
       Assert.assertEquals(tableConfig.getTableType(), TableType.OFFLINE);
       Assert.assertEquals(tableConfig.getIndexingConfig().getLoadMode(), "HEAP");
-      Assert.assertNull(tableConfig.getQuotaConfig());
-      String tcFromJson = tableConfig.toJSON().toString();
-      TableConfig validator = TableConfig.init(tcFromJson);
-      Assert.assertNull(validator.getQuotaConfig());
+      Assert.assertNotNull(tableConfig.getValidationConfig().getDateFormat());
+      Assert.assertEquals(tableConfig.getValidationConfig().getDateFormat().getSimpleDate(), "yymmdd");
+      Assert.assertNotNull(tableConfig.getQuotaConfig());
+      Assert.assertEquals(tableConfig.getQuotaConfig().getStorage(), "30G");
+
+      // Serialize then de-serialize
+      TableConfig validator = TableConfig.init(tableConfig.toJSON().toString());
       Assert.assertEquals(validator.getTableName(), tableConfig.getTableName());
-      Assert.assertNull(tableConfig.getValidationConfig().getDateFormat());
+      Assert.assertNotNull(tableConfig.getValidationConfig().getDateFormat());
+      Assert.assertEquals(tableConfig.getValidationConfig().getDateFormat().getSimpleDate(), "yymmdd");
+      Assert.assertNotNull(validator.getQuotaConfig());
+      Assert.assertEquals(validator.getQuotaConfig().getStorage(), tableConfig.getQuotaConfig().getStorage());
     }
   }
 }

@@ -17,10 +17,10 @@ package com.linkedin.pinot.common.config;
 
 import com.linkedin.pinot.common.utils.DateFormat;
 import java.lang.reflect.Field;
-
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SegmentsValidationAndRetentionConfig {
@@ -28,7 +28,6 @@ public class SegmentsValidationAndRetentionConfig {
 
   private String retentionTimeUnit;
   private String retentionTimeValue;
-  private String segmentPushFrequency;
   private String segmentPushType;
   private String replication; // For high-level kafka consumers, the number of replicas should be same as num server instances
   private String schemaName;
@@ -64,9 +63,6 @@ public class SegmentsValidationAndRetentionConfig {
     this.timeType = timeType;
   }
 
-  public SegmentsValidationAndRetentionConfig() {
-  }
-
   public String getRetentionTimeUnit() {
     return retentionTimeUnit;
   }
@@ -81,14 +77,6 @@ public class SegmentsValidationAndRetentionConfig {
 
   public void setRetentionTimeValue(String retentionTimeValue) {
     this.retentionTimeValue = retentionTimeValue;
-  }
-
-  public String getSegmentPushFrequency() {
-    return segmentPushFrequency;
-  }
-
-  public void setSegmentPushFrequency(String segmentPushFrequency) {
-    this.segmentPushFrequency = segmentPushFrequency;
   }
 
   public String getSegmentPushType() {

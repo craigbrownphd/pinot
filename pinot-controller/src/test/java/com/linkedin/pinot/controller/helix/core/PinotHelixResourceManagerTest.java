@@ -18,6 +18,7 @@ package com.linkedin.pinot.controller.helix.core;
 import com.google.common.collect.BiMap;
 import com.linkedin.pinot.common.config.TableConfig;
 import com.linkedin.pinot.common.config.Tenant;
+import com.linkedin.pinot.common.config.helper.TableConfigJSONBuilder;
 import com.linkedin.pinot.common.utils.CommonConstants;
 import com.linkedin.pinot.common.utils.ControllerTenantNameBuilder;
 import com.linkedin.pinot.common.utils.ZkStarter;
@@ -33,6 +34,7 @@ import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
 
 public class PinotHelixResourceManagerTest {
   ZkStarter.ZookeeperInstance zkServer;
@@ -80,10 +82,16 @@ public class PinotHelixResourceManagerTest {
   }
 
   @Test
-  public void testRebuildBrokerResourceFromHelixTags() throws Exception {
-    TableConfig tableConfig = TableConfig.init(
-        ControllerRequestBuilderUtil.buildCreateOfflineTableJSON("faketable", "serverTenant", "brokerTenant", 3)
-            .toString());
+  public void testRebuildBrokerResourceFromHelixTags()
+      throws Exception {
+    String tableConfigJSONString =
+        new TableConfigJSONBuilder(CommonConstants.Helix.TableType.OFFLINE).setTableName("faketable")
+            .setNumReplicas(3)
+            .setBrokerTenant("brokerTenant")
+            .setServerTenant("serverTenant")
+            .build()
+            .toString();
+    TableConfig tableConfig = TableConfig.init(tableConfigJSONString);
 
     Tenant tenant = new Tenant();
     tenant.setTenantName("brokerTenant");

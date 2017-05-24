@@ -20,6 +20,7 @@ import com.linkedin.pinot.broker.broker.helix.DefaultHelixBrokerConfig;
 import com.linkedin.pinot.broker.broker.helix.HelixBrokerStarter;
 import com.linkedin.pinot.common.config.TableConfig;
 import com.linkedin.pinot.common.config.TableNameBuilder;
+import com.linkedin.pinot.common.config.helper.TableConfigJSONBuilder;
 import com.linkedin.pinot.common.segment.SegmentMetadata;
 import com.linkedin.pinot.common.utils.CommonConstants;
 import com.linkedin.pinot.common.utils.ZkStarter;
@@ -45,7 +46,6 @@ import org.apache.helix.HelixAdmin;
 import org.apache.helix.HelixManager;
 import org.apache.helix.model.ExternalView;
 import org.apache.helix.model.IdealState;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
@@ -94,9 +94,9 @@ public class HelixBrokerStarterTest {
         ZkStarter.DEFAULT_ZK_STR, 1, true);
 
     final String tableName = "dining";
-    JSONObject buildCreateOfflineTableV2JSON =
-        ControllerRequestBuilderUtil.buildCreateOfflineTableJSON(tableName, null, null, 1);
-    TableConfig config = TableConfig.init(buildCreateOfflineTableV2JSON.toString());
+    String tableConfigJSONString =
+        new TableConfigJSONBuilder(CommonConstants.Helix.TableType.OFFLINE).setTableName(tableName).build().toString();
+    TableConfig config = TableConfig.init(tableConfigJSONString);
     _pinotResourceManager.addTable(config);
 
     for (int i = 1; i <= 5; i++) {
@@ -146,10 +146,13 @@ public class HelixBrokerStarterTest {
     Assert.assertEquals(Arrays.toString(brokerRoutingTable.keySet().toArray()), "[dining_OFFLINE]");
 
     final String tableName = "coffee";
-    JSONObject buildCreateOfflineTableV2JSON =
-        ControllerRequestBuilderUtil.buildCreateOfflineTableJSON(tableName, "testServer", "testBroker", 1);
-    TableConfig config = TableConfig.init(buildCreateOfflineTableV2JSON.toString());
-    _pinotResourceManager.addTable(config);
+    String tableConfigJSONString =
+        new TableConfigJSONBuilder(CommonConstants.Helix.TableType.OFFLINE).setTableName(tableName)
+            .setBrokerTenant("testBroker")
+            .setServerTenant("testServer")
+            .build()
+            .toString();
+    _pinotResourceManager.addTable(TableConfig.init(tableConfigJSONString));
 
     Assert.assertEquals(_helixAdmin.getInstancesInClusterWithTag(HELIX_CLUSTER_NAME, "DefaultTenant_BROKER").size(), 6);
     idealState = _helixAdmin.getResourceIdealState(HELIX_CLUSTER_NAME, CommonConstants.Helix.BROKER_RESOURCE_INSTANCE);

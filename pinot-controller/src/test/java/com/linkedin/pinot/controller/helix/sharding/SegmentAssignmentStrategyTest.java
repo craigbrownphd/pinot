@@ -17,7 +17,9 @@ package com.linkedin.pinot.controller.helix.sharding;
 
 import com.linkedin.pinot.common.config.TableConfig;
 import com.linkedin.pinot.common.config.TableNameBuilder;
+import com.linkedin.pinot.common.config.helper.TableConfigJSONBuilder;
 import com.linkedin.pinot.common.segment.SegmentMetadata;
+import com.linkedin.pinot.common.utils.CommonConstants;
 import com.linkedin.pinot.common.utils.ZkStarter;
 import com.linkedin.pinot.controller.helix.ControllerRequestBuilderUtil;
 import com.linkedin.pinot.controller.helix.core.PinotHelixResourceManager;
@@ -97,10 +99,13 @@ public class SegmentAssignmentStrategyTest {
     final int numReplicas = 2;
 
     // Adding table
-    String OfflineTableConfigJson = ControllerRequestBuilderUtil
-        .buildCreateOfflineTableJSON(TABLE_NAME_RANDOM, null, null, numReplicas, "RandomAssignmentStrategy").toString();
-    TableConfig offlineTableConfig = TableConfig.init(OfflineTableConfigJson);
-    _pinotHelixResourceManager.addTable(offlineTableConfig);
+    String tableConfigJSONString =
+        new TableConfigJSONBuilder(CommonConstants.Helix.TableType.OFFLINE).setTableName(TABLE_NAME_RANDOM)
+            .setSegmentAssignmentStrategy("RandomAssignmentStrategy")
+            .setNumReplicas(numReplicas)
+            .build()
+            .toString();
+    _pinotHelixResourceManager.addTable(TableConfig.init(tableConfigJSONString));
 
     Thread.sleep(3000);
     for (int i = 0; i < 10; ++i) {
@@ -125,11 +130,15 @@ public class SegmentAssignmentStrategyTest {
   @Test
   public void testBalanceNumSegmentAssignmentStrategy() throws Exception {
     final int numReplicas = 3;
+
     // Adding table
-    String OfflineTableConfigJson = ControllerRequestBuilderUtil.buildCreateOfflineTableJSON(TABLE_NAME_BALANCED, null,
-        null, numReplicas, "BalanceNumSegmentAssignmentStrategy").toString();
-    TableConfig offlineTableConfig = TableConfig.init(OfflineTableConfigJson);
-    _pinotHelixResourceManager.addTable(offlineTableConfig);
+    String tableConfigJSONString =
+        new TableConfigJSONBuilder(CommonConstants.Helix.TableType.OFFLINE).setTableName(TABLE_NAME_BALANCED)
+            .setSegmentAssignmentStrategy("BalanceNumSegmentAssignmentStrategy")
+            .setNumReplicas(numReplicas)
+            .build()
+            .toString();
+    _pinotHelixResourceManager.addTable(TableConfig.init(tableConfigJSONString));
 
     Thread.sleep(3000);
     int numSegments = 20;

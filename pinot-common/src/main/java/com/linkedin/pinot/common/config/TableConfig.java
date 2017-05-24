@@ -37,6 +37,7 @@ public class TableConfig {
   private static final String INDEXING_CONFIG_KEY = "tableIndexConfig";
   private static final String CUSTOM_CONFIG_KEY = "metadata";
   private static final String QUOTA_CONFIG_KEY = "quota";
+  private static final String TASK_CONFIG_KEY = "task";
 
   private String _tableName;
   private TableType _tableType;
@@ -45,11 +46,12 @@ public class TableConfig {
   private IndexingConfig _indexingConfig;
   private TableCustomConfig _customConfig;
   private QuotaConfig _quotaConfig;
+  private TableTaskConfig _taskConfig;
 
   private TableConfig(@Nonnull String tableName, @Nonnull TableType tableType,
       @Nonnull SegmentsValidationAndRetentionConfig validationConfig, @Nonnull TenantConfig tenantConfig,
       @Nonnull IndexingConfig indexingConfig, @Nonnull TableCustomConfig customConfig,
-      @Nullable QuotaConfig quotaConfig) {
+      @Nullable QuotaConfig quotaConfig, @Nullable TableTaskConfig taskConfig) {
     _tableName = TableNameBuilder.forType(tableType).tableNameWithType(tableName);
     _tableType = tableType;
     _validationConfig = validationConfig;
@@ -57,6 +59,7 @@ public class TableConfig {
     _indexingConfig = indexingConfig;
     _customConfig = customConfig;
     _quotaConfig = quotaConfig;
+    _taskConfig = taskConfig;
   }
 
   @Nonnull
@@ -80,9 +83,13 @@ public class TableConfig {
       quotaConfig = OBJECT_MAPPER.readValue(jsonConfig.getJSONObject(QUOTA_CONFIG_KEY).toString(), QuotaConfig.class);
       quotaConfig.validate();
     }
+    TableTaskConfig taskConfig = null;
+    if (jsonConfig.has(TASK_CONFIG_KEY)) {
+      taskConfig = OBJECT_MAPPER.readValue(jsonConfig.getJSONObject(TASK_CONFIG_KEY).toString(), TableTaskConfig.class);
+    }
 
     return new TableConfig(tableName, tableType, validationConfig, tenantConfig, indexingConfig, customConfig,
-        quotaConfig);
+        quotaConfig, taskConfig);
   }
 
   @Nonnull
@@ -100,6 +107,10 @@ public class TableConfig {
     if (quotaConfig != null) {
       jsonConfig.put(QUOTA_CONFIG_KEY, new JSONObject(quotaConfig));
     }
+    String taskConfig = simpleFields.get(TASK_CONFIG_KEY);
+    if (taskConfig != null) {
+      jsonConfig.put(TASK_CONFIG_KEY, new JSONObject(taskConfig));
+    }
     return init(jsonConfig.toString());
   }
 
@@ -116,6 +127,9 @@ public class TableConfig {
     simpleFields.put(CUSTOM_CONFIG_KEY, OBJECT_MAPPER.writeValueAsString(config._customConfig));
     if (config._quotaConfig != null) {
       simpleFields.put(QUOTA_CONFIG_KEY, OBJECT_MAPPER.writeValueAsString(config._quotaConfig));
+    }
+    if (config._taskConfig != null) {
+      simpleFields.put(TASK_CONFIG_KEY, OBJECT_MAPPER.writeValueAsString(config._taskConfig));
     }
     record.setSimpleFields(simpleFields);
     return record;
@@ -184,20 +198,42 @@ public class TableConfig {
     _quotaConfig = quotaConfig;
   }
 
+  @Nullable
+  public TableTaskConfig getTaskConfig() {
+    return _taskConfig;
+  }
+
+  public void setTaskConfig(@Nullable TableTaskConfig taskConfig) {
+    _taskConfig = taskConfig;
+  }
+
+  @Nonnull
+  public static JSONObject getJSONConfig(@Nonnull String tableName, @Nonnull TableType tableType,
+      @Nonnull SegmentsValidationAndRetentionConfig validationConfig, @Nonnull TenantConfig tenantConfig,
+      @Nonnull IndexingConfig indexingConfig, @Nonnull TableCustomConfig customConfig,
+      @Nullable QuotaConfig quotaConfig, @Nullable TableTaskConfig taskConfig)
+      throws IOException, JSONException {
+    JSONObject jsonConfig = new JSONObject();
+    jsonConfig.put(TABLE_NAME_KEY, tableName);
+    jsonConfig.put(TABLE_TYPE_KEY, tableType.toString().toLowerCase());
+    jsonConfig.put(VALIDATION_CONFIG_KEY, new JSONObject(OBJECT_MAPPER.writeValueAsString(validationConfig)));
+    jsonConfig.put(TENANT_CONFIG_KEY, new JSONObject(OBJECT_MAPPER.writeValueAsString(tenantConfig)));
+    jsonConfig.put(INDEXING_CONFIG_KEY, new JSONObject(OBJECT_MAPPER.writeValueAsString(indexingConfig)));
+    jsonConfig.put(CUSTOM_CONFIG_KEY, new JSONObject(OBJECT_MAPPER.writeValueAsString(customConfig)));
+    if (quotaConfig != null) {
+      jsonConfig.put(QUOTA_CONFIG_KEY, new JSONObject(OBJECT_MAPPER.writeValueAsString(quotaConfig)));
+    }
+    if (taskConfig != null) {
+      jsonConfig.put(TASK_CONFIG_KEY, new JSONObject(OBJECT_MAPPER.writeValueAsString(taskConfig)));
+    }
+    return jsonConfig;
+  }
+
   @Nonnull
   public JSONObject toJSON()
       throws IOException, JSONException {
-    JSONObject jsonConfig = new JSONObject();
-    jsonConfig.put(TABLE_NAME_KEY, _tableName);
-    jsonConfig.put(TABLE_TYPE_KEY, _tableType.toString().toLowerCase());
-    jsonConfig.put(VALIDATION_CONFIG_KEY, new JSONObject(OBJECT_MAPPER.writeValueAsString(_validationConfig)));
-    jsonConfig.put(TENANT_CONFIG_KEY, new JSONObject(OBJECT_MAPPER.writeValueAsString(_tenantConfig)));
-    jsonConfig.put(INDEXING_CONFIG_KEY, new JSONObject(OBJECT_MAPPER.writeValueAsString(_indexingConfig)));
-    jsonConfig.put(CUSTOM_CONFIG_KEY, new JSONObject(OBJECT_MAPPER.writeValueAsString(_customConfig)));
-    if (_quotaConfig != null) {
-      jsonConfig.put(QUOTA_CONFIG_KEY, new JSONObject(OBJECT_MAPPER.writeValueAsString(_quotaConfig)));
-    }
-    return jsonConfig;
+    return getJSONConfig(_tableName, _tableType, _validationConfig, _tenantConfig, _indexingConfig, _customConfig,
+        _quotaConfig, _taskConfig);
   }
 
   @Override

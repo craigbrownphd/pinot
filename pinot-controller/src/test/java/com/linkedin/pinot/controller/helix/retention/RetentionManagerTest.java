@@ -18,6 +18,7 @@ package com.linkedin.pinot.controller.helix.retention;
 import com.alibaba.fastjson.JSONObject;
 import com.linkedin.pinot.common.config.TableConfig;
 import com.linkedin.pinot.common.config.TableNameBuilder;
+import com.linkedin.pinot.common.config.helper.TableConfigJSONBuilder;
 import com.linkedin.pinot.common.data.MetricFieldSpec;
 import com.linkedin.pinot.common.data.Schema;
 import com.linkedin.pinot.common.metadata.ZKMetadataProvider;
@@ -109,10 +110,14 @@ public class RetentionManagerTest {
     _helixAdmin = _pinotHelixResourceManager.getHelixAdmin();
     _helixZkManager = _pinotHelixResourceManager.getHelixZkManager();
 
-    String OfflineTableConfigJson =
-        ControllerRequestBuilderUtil.buildCreateOfflineTableJSON(_testTableName, null, null, 2).toString();
-    TableConfig offlineTableConfig = TableConfig.init(OfflineTableConfigJson);
-    _pinotHelixResourceManager.addTable(offlineTableConfig);
+    String tableConfigJSONString =
+        new TableConfigJSONBuilder(CommonConstants.Helix.TableType.OFFLINE).setTableName(_testTableName)
+            .setRetentionTimeUnit("DAYS")
+            .setRetentionTimeValue("365")
+            .setNumReplicas(2)
+            .build()
+            .toString();
+    _pinotHelixResourceManager.addTable(TableConfig.init(tableConfigJSONString));
     _propertyStore = ZkUtils.getZkPropertyStore(_helixZkManager, HELIX_CLUSTER_NAME);
   }
 

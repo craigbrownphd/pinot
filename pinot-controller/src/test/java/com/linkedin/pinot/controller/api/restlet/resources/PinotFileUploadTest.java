@@ -16,6 +16,8 @@
 package com.linkedin.pinot.controller.api.restlet.resources;
 
 import com.linkedin.pinot.common.config.TableConfig;
+import com.linkedin.pinot.common.config.helper.TableConfigJSONBuilder;
+import com.linkedin.pinot.common.utils.CommonConstants;
 import com.linkedin.pinot.common.utils.ZkStarter;
 import com.linkedin.pinot.controller.helix.ControllerRequestBuilderUtil;
 import com.linkedin.pinot.controller.helix.ControllerRequestURLBuilder;
@@ -70,11 +72,13 @@ public class PinotFileUploadTest extends ControllerTest {
     Assert.assertEquals(_helixAdmin.getInstancesInClusterWithTag(HELIX_CLUSTER_NAME, "DefaultTenant_BROKER").size(), 5);
 
     // Adding table
-    String OfflineTableConfigJson =
-        ControllerRequestBuilderUtil.buildCreateOfflineTableJSON(TABLE_NAME, null, null, 2, "RandomAssignmentStrategy")
+    String tableConfigJSONString =
+        new TableConfigJSONBuilder(CommonConstants.Helix.TableType.OFFLINE).setTableName(TABLE_NAME)
+            .setSegmentAssignmentStrategy("RandomAssignmentStrategy")
+            .setNumReplicas(2)
+            .build()
             .toString();
-    TableConfig offlineTableConfig = TableConfig.init(OfflineTableConfigJson);
-    _pinotHelixResourceManager.addTable(offlineTableConfig);
+    _pinotHelixResourceManager.addTable(TableConfig.init(tableConfigJSONString));
   }
 
   @AfterClass
