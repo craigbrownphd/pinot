@@ -58,13 +58,14 @@ public final class Schema {
   private final List<DimensionFieldSpec> _dimensionFieldSpecs = new ArrayList<>();
   private final List<MetricFieldSpec> _metricFieldSpecs = new ArrayList<>();
   private TimeFieldSpec _timeFieldSpec;
+
+  // Json ignored fields
   private final Map<String, FieldSpec> _fieldSpecMap = new HashMap<>();
   private final Set<String> _dimensionSet = new HashSet<>();
   private final Set<String> _metricSet = new HashSet<>();
   private final List<String> _dimensionList = new ArrayList<>();
   private final List<String> _metricList = new ArrayList<>();
-
-  private transient String _jsonSchema;
+  private String _jsonSchema;
 
   @Nonnull
   public static Schema fromFile(@Nonnull File schemaFile)
@@ -91,6 +92,8 @@ public final class Schema {
 
   public void setSchemaName(@Nonnull String schemaName) {
     _schemaName = schemaName;
+
+    _jsonSchema = null;
   }
 
   @Nonnull
@@ -104,6 +107,8 @@ public final class Schema {
     for (DimensionFieldSpec dimensionFieldSpec : dimensionFieldSpecs) {
       addField(dimensionFieldSpec);
     }
+
+    _jsonSchema = null;
   }
 
   @Nonnull
@@ -117,6 +122,8 @@ public final class Schema {
     for (MetricFieldSpec metricFieldSpec : metricFieldSpecs) {
       addField(metricFieldSpec);
     }
+
+    _jsonSchema = null;
   }
 
   @Nullable
@@ -128,6 +135,8 @@ public final class Schema {
     if (timeFieldSpec != null) {
       addField(timeFieldSpec);
     }
+
+    _jsonSchema = null;
   }
 
   public void addField(@Nonnull FieldSpec fieldSpec) {
