@@ -170,6 +170,7 @@ public class SegmentCompletionProtocol {
       private long _buildTimeMillis;
       private long _waitTimeMillis;
       private int _extraTimeSec;
+      private boolean _splitEnabled;
 
       public Params() {
         _offset = -1L;
@@ -179,6 +180,7 @@ public class SegmentCompletionProtocol {
         _buildTimeMillis = -1;
         _waitTimeMillis = -1;
         _extraTimeSec = -1;
+        _splitEnabled = false;
       }
       public Params withOffset(long offset) {
         _offset = offset;
@@ -212,6 +214,10 @@ public class SegmentCompletionProtocol {
         _extraTimeSec = extraTimeSec;
         return this;
       }
+      public Params withSplitEnabled(boolean splitEnabled) {
+        _splitEnabled = splitEnabled;
+        return this;
+      }
 
       public String getSegmentName() {
         return _segmentName;
@@ -236,6 +242,9 @@ public class SegmentCompletionProtocol {
       }
       public int getExtraTimeSec() {
         return _extraTimeSec;
+      }
+      public boolean getSplitEnabled() {
+        return _splitEnabled;
       }
     }
   }
@@ -323,11 +332,13 @@ public class SegmentCompletionProtocol {
       private ControllerResponseStatus _status;
       private long _offset;
       private long _buildTimeSec;
+      private boolean _splitEnabled;
 
       public Params() {
         _offset = -1L;
         _status = ControllerResponseStatus.FAILED;
         _buildTimeSec = -1;
+        _splitEnabled = false;
       }
 
       public Params withOffset(long offset) {
@@ -342,6 +353,10 @@ public class SegmentCompletionProtocol {
         _buildTimeSec = buildTimeSeconds;
         return this;
       }
+      public Params withSplitEnabled(boolean splitEnabled) {
+        _splitEnabled = splitEnabled;
+        return this;
+      }
 
       public ControllerResponseStatus getStatus() {
         return _status;
@@ -351,6 +366,9 @@ public class SegmentCompletionProtocol {
       }
       public long getBuildTimeSeconds() {
         return _buildTimeSec;
+      }
+      public boolean getSplitEnabled() {
+        return _splitEnabled;
       }
     }
   }
